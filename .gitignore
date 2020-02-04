@@ -6,4 +6,5 @@ bin
 .metadata
 .log
 *.log
+*.iml
 ignore
