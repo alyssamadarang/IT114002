@@ -7,3 +7,4 @@ bin.metadata
 *.log
 ignore
 
+/.metadata/

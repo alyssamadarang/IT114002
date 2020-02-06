@@ -96,6 +96,7 @@ public class FileSystemsSampleJSON {
 		String jsonFile = "sample.json";
 		createFileAndGetDetails(jsonFile);
 		//overwrite data with an empty json object
+		
 		//comment this line if you want to load a previous json object
 		writeToFile(jsonFile, "{}");
 		try {
@@ -103,9 +104,14 @@ public class FileSystemsSampleJSON {
 			//the previous writeToFile function call
 			//if no issues this returns our JSONObject as a map of key/values
 			JSONObject jo = (JSONObject) new JSONParser().parse(new FileReader(jsonFile));
+			
 			//start adding key value pairs
+			
 			jo.put("name", "John");
+			jo.put("name", "Alice"); // added a new name value pair with same name
+		
 			jo.put("age", 55);
+			
 			//this shows how we can add a sub set of key value pairs under a single key
 			Map<String, String> map = new LinkedHashMap<String, String>(4);//complex details for one key
 			map.put("address", "123 Fake Street");
