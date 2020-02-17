@@ -9,4 +9,8 @@
 			<item value="/Users/alyssamadarang/IT114002"/>
 		</list>
 	</section>
+	<section name="ResourceNavigator">
+		<item key="ResourceViewer.STORE_SORT_TYPE" value="1"/>
+		<item key="ResourceWorkingSetFilter.STORE_WORKING_SET" value="Aggregate for window 1580940014915"/>
+	</section>
 </section>
