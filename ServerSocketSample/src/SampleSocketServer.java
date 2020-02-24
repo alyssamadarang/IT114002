@@ -41,6 +41,7 @@ public class SampleSocketServer {
 			}
 		}
 	}
+	@Deprecated
 	int getClientIndexByThreadId(long id) {
 		for(int i = 0, l = clients.size(); i < l;i++) {
 			if(clients.get(i).getId() == id) {
@@ -49,19 +50,22 @@ public class SampleSocketServer {
 		}
 		return -1;
 	}
-	//Broadcast given message to everyone connected
-	public synchronized void broadcast(String message, long id) {
-		//let's temporarily use the index as the client identifier to
-		//show in all client's chat. You'll see why this is a bad idea
-		//when clients disconnect/reconnect.
-		int from = getClientIndexByThreadId(id);
-		message = (from>-1?"Client[" + from+"]":"unknown") + ": " + message;
-		//end temp identifier
+	public synchronized void broadcast(Payload payload, String name) {
+		String msg = payload.getMessage();
+		payload.setMessage(
+				//prepending client name to front of message
+				(name!=null?name:"[Name Error]") 
+				//including original message if not null (with a prepended colon)
+				+ (msg != null?": "+ msg:"")
+		);
+		broadcast(payload);
+	}
+	public synchronized void broadcast(Payload payload) {
 		System.out.println("Sending message to " + clients.size() + " clients");
 		Iterator<ServerThread> iter = clients.iterator();
 		while(iter.hasNext()) {
 			ServerThread client = iter.next();
-			boolean messageSent = client.send(message);
+			boolean messageSent = client.send(payload);
 			if(!messageSent) {
 				//if we got false, due to update of send()
 				//we can assume the client lost connection
@@ -70,6 +74,31 @@ public class SampleSocketServer {
 				System.out.println("Removed client " + client.getId());
 			}
 		}
+	}
+	//Broadcast given payload to everyone connected
+	public synchronized void broadcast(Payload payload, long id) {
+		//let's temporarily use the index as the client identifier to
+		//show in all client's chat. You'll see why this is a bad idea
+		//when clients disconnect/reconnect.
+		int from = getClientIndexByThreadId(id);
+		String msg = payload.getMessage();
+		payload.setMessage(
+				//prepending client name to front of message
+				(from>-1?"Client[" + from+"]":"unknown") 
+				//including original message if not null (with a prepended colon)
+				+ (msg != null?": "+ msg:"")
+		);
+		//end temp identifier (maybe this won't be too temporary as I've reused
+		//it in a few samples now)
+		broadcast(payload);
+		
+	}
+	//Broadcast given message to everyone connected
+	public synchronized void broadcast(String message, long id) {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.MESSAGE);
+		payload.setMessage(message);
+		broadcast(payload, id);
 	}
 	
 

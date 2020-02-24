@@ -27,6 +27,26 @@ public class SampleSocketClient {
 		try(Scanner si = new Scanner(System.in);
 				ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
 				ObjectInputStream in = new ObjectInputStream(server.getInputStream());){
+			//let's block the thread for a sec to gather a username
+			String name ="";
+			do {
+				System.out.println("Please enter a username to continue");
+				name = si.nextLine();
+				if(name == null || name.trim().length() == 0) {
+					name="";
+				}
+			}
+			while(!server.isClosed() && name != null && name.length() == 0);
+			//we should have a name, let's tell our server
+			Payload p = new Payload();
+			//we can also default payloadtype in payload
+			//to a desired value, though it's good to be clear
+			//what we're sending
+			p.setPayloadType(PayloadType.CONNECT);
+			p.setMessage(name);
+			out.writeObject(p);
+			
+			
 			//Thread to listen for keyboard input so main thread isn't blocked
 			Thread inputThread = new Thread() {
 				@Override
@@ -37,12 +57,21 @@ public class SampleSocketClient {
 							String line = si.nextLine();
 							if(!"quit".equalsIgnoreCase(line) && line != null) {
 								//grab line and throw it into a payload object
-								out.writeObject(line);
+								Payload p = new Payload();
+								//we can also default payloadtype in payload
+								//to a desired value, though it's good to be clear
+								//what we're sending
+								p.setPayloadType(PayloadType.MESSAGE);
+								p.setMessage(line);
+								out.writeObject(p);
 							}
 							else {
 								System.out.println("Stopping input thread");
 								//we're quitting so tell server we disconnected so it can broadcast
-								out.writeObject("bye");
+								Payload p = new Payload();
+								p.setPayloadType(PayloadType.DISCONNECT);
+								p.setMessage("bye");
+								out.writeObject(p);
 								break;
 							}
 						}
@@ -62,10 +91,11 @@ public class SampleSocketClient {
 				@Override
 				public void run() {
 					try {
-						String fromServer;
-						//while we're connected, listed for payloads from server
-						while(!server.isClosed() && (fromServer = (String)in.readObject()) != null) {
-							System.out.println(fromServer);
+						Payload fromServer;
+						//while we're connected, listen for payloads from server
+						while(!server.isClosed() && (fromServer = (Payload)in.readObject()) != null) {
+							//System.out.println(fromServer);
+							processPayload(fromServer);
 						}
 						System.out.println("Stopping server listen thread");
 					}
@@ -100,6 +130,29 @@ public class SampleSocketClient {
 		}
 		finally {
 			close();
+		}
+	}
+	private void processPayload(Payload payload) {
+		System.out.println(payload);
+		switch(payload.getPayloadType()) {
+		case CONNECT:
+			System.out.println(
+					String.format("Client \"%s\" connected", payload.getMessage())
+			);
+			break;
+		case DISCONNECT:
+			System.out.println(
+					String.format("Client \"%s\" disconnected", payload.getMessage())
+			);
+			break;
+		case MESSAGE:
+			System.out.println(
+					String.format("%s", payload.getMessage())
+			);
+			break;
+		default:
+			System.out.println("Unhandled payload type: " + payload.getPayloadType().toString());
+			break;
 		}
 	}
 	private void close() {
