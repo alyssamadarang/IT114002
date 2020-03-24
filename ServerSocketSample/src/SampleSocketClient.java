@@ -147,7 +147,7 @@ public class SampleSocketClient {
 			break;
 		case MESSAGE:
 			System.out.println(
-					String.format("%s", payload.getMessage())
+					String.format("%s", payload.getClientName(), payload.getMessage())
 			);
 			break;
 		default:
