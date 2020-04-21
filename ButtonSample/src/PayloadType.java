@@ -2,5 +2,7 @@
 public enum PayloadType {
 	CONNECT,
 	DISCONNECT,
-	MESSAGE
+	MESSAGE,
+	SEND,
+	STATE_SYNC
 }

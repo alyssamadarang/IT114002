@@ -18,24 +18,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-
-
-
-
 public class SocketClient {
 	Socket server;
-	private String clientName;
-	private String ipAddress;
-	private int portNumber;
 	
-	public String getClientName() {
-		return this.clientName;
-	}
-	
-	public void setClientName(String newName) {
-		this.clientName = newName;
-	}
-
 	public void connect(String address, int port) {
 		try {
 			server = new Socket(address, port);
@@ -46,161 +31,28 @@ public class SocketClient {
 			e.printStackTrace();
 		}
 	}
-	
-	public void startUI() {
-
-		//create frame
-		JFrame frame = new JFrame("Chat Room"); 
-		frame.setLayout(new BorderLayout());
-		
-		//create panel
-		JPanel chatRoom = new JPanel();
-		chatRoom.setPreferredSize(new Dimension (400,400));
-		chatRoom.setLayout(new BorderLayout());
-		
-		//create top panel
-		JPanel topConnect = new JPanel();
-		
-		
-		//create text area for messages and displaying users
-		JTextArea chatTextArea = new JTextArea();
-		JTextArea usersText = new JTextArea();
-		
-		//don't let the user edit this directly
-		chatTextArea.setEditable(false);
-		chatTextArea.setText("");
-		
-		//create panel to hold multiple controls
-		JPanel chatArea = new JPanel();
-		chatArea.setPreferredSize(new Dimension(250, 400));
-		chatArea.setLayout(new BorderLayout());
-		
-		//create panel to display connected users
-		JPanel usersArea = new JPanel();
-		usersArea.setPreferredSize(new Dimension(150, 400));
-		usersArea.setLayout(new BorderLayout());
-		
-		//add text area to chat area and usersArea
-		chatArea.add(chatTextArea, BorderLayout.CENTER);
-		chatArea.setBorder(BorderFactory.createLineBorder(Color.black));
-		
-		usersArea.add(usersText, BorderLayout.CENTER);
-		usersArea.setBorder(BorderFactory.createLineBorder(Color.black));
-		
-		JLabel uLabel = new JLabel();
-		uLabel.setText("Online users");
-		
-		// add label to users area
-		usersArea.add(uLabel, BorderLayout.NORTH);
-		
-		
-		//add chat area and users area to panel
-		chatRoom.add(chatArea, BorderLayout.WEST);
-		chatRoom.add(usersArea, BorderLayout.EAST);
-		
-		//username textfield
-		JTextField usernameField = new JTextField("Your username");
-		usernameField.setPreferredSize(new Dimension(100, 30));
-		this.clientName = usernameField.getText();
-		
-		
-		//IP and port input fields
-		JTextField ipAdd = new JTextField("127.0.0.1");
-		ipAdd.setPreferredSize(new Dimension(100, 30));
-		this.ipAddress = ipAdd.getText();
-		
-		JTextField portNum = new JTextField("3002");
-		portNum.setPreferredSize(new Dimension(50, 30));
-		this.portNumber = Integer.parseInt(portNum.getText());
-		
-		//connect button
-		JButton c = new JButton();
-		c.setPreferredSize(new Dimension (100, 30));
-		c.setText("Connect");
-		c.addActionListener(new ActionListener() {
-		
-				
-				@Override
-				public void actionPerformed(ActionEvent event) {
-					String username = usernameField.getText();
-		
-					
-					usersText.append("\n" + username);
-						
-					c.setText("Reconnect");
-					
-
-		
-				}
-			}
-		);
-		
-		
-		
-		//create panel to hold multiple controls
-		JPanel userInput = new JPanel();
-		
-		//setup textfield
-		JTextField messageField = new JTextField();
-		messageField.setPreferredSize(new Dimension(100, 30));
-		
-		
-		//setup submit button
-		JButton send = new JButton();
-		send.setPreferredSize(new Dimension(100, 30));
-		send.setText("Send");
-		
-		
-		//add username input and connect input 
-		topConnect.add(usernameField);
-		topConnect.add(ipAdd);
-		topConnect.add(portNum);
-		topConnect.add(c);
-		
-		//add textfield and button to panel
-		userInput.add(messageField);
-		userInput.add(send);
-		
-		//add panels to chatRoom panel
-		chatRoom.add(userInput, BorderLayout.SOUTH);
-		chatRoom.add(topConnect, BorderLayout.NORTH);
-		
-		
-		//add chatRoom panel to frame
-		frame.add(chatRoom, BorderLayout.CENTER);
-		
-		frame.pack();
-		frame.setVisible(true);
-		 
-	}
-
-	
-	public void start(String u) throws IOException {
-	
-		
+	public void start() throws IOException {
+		if(server == null) {
+			return;
+		}
 		System.out.println("Client Started");
 		//listen to console, server in, and write to server out
 		try(Scanner si = new Scanner(System.in);
 				ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
 				ObjectInputStream in = new ObjectInputStream(server.getInputStream());){
 			//let's block the thread for a sec to gather a username
-			String name = "";
-			
+			String name ="";
 			do {
-				name = u;
-				if(name == null || name.trim().length() == 0) {
-					name="";
-				}
+				name = "";
 			}
 			while(!server.isClosed() && name != null && name.length() == 0);
-			
 			//we should have a name, let's tell our server
 			Payload p = new Payload();
 			//we can also default payloadtype in payload
 			//to a desired value, though it's good to be clear
 			//what we're sending
 			p.setPayloadType(PayloadType.CONNECT);
-			p.setClientName(name);
+			p.setMessage(name);
 			out.writeObject(p);
 			
 			
@@ -219,7 +71,6 @@ public class SocketClient {
 								//to a desired value, though it's good to be clear
 								//what we're sending
 								p.setPayloadType(PayloadType.MESSAGE);
-								p.setClientName(u);
 								p.setMessage(line);
 								out.writeObject(p);
 							}
@@ -228,7 +79,6 @@ public class SocketClient {
 								//we're quitting so tell server we disconnected so it can broadcast
 								Payload p = new Payload();
 								p.setPayloadType(PayloadType.DISCONNECT);
-								p.setClientName(u);
 								p.setMessage("bye");
 								out.writeObject(p);
 								break;
@@ -306,7 +156,7 @@ public class SocketClient {
 			break;
 		case MESSAGE:
 			System.out.println(
-					String.format("%s", payload.getClientName(), payload.getMessage())
+					String.format("%s", payload.getMessage())
 			);
 			break;
 		default:
@@ -327,17 +177,146 @@ public class SocketClient {
 	public static void main(String[] args) {
 		SocketClient client = new SocketClient();
 		
-		client.startUI();
+		//create frame
+		JFrame frame = new JFrame("Chat Room"); 
+		frame.setLayout(new BorderLayout());
 		
-		client.connect(client.ipAddress, client.portNumber);
-	
-
+		//create panel
+		JPanel chatRoom = new JPanel();
+		chatRoom.setPreferredSize(new Dimension (400,400));
+		chatRoom.setLayout(new BorderLayout());
+		
+		//create top panel
+		JPanel topConnect = new JPanel();
+		
+		
+		//create text area for messages and displaying users
+		JTextArea chatTextArea = new JTextArea();
+		JTextArea usersText = new JTextArea();
+		
+		//don't let the user edit this directly
+		chatTextArea.setEditable(false);
+		chatTextArea.setText("");
+		
+		//create panel to hold multiple controls
+		JPanel chatArea = new JPanel();
+		chatArea.setPreferredSize(new Dimension(250, 400));
+		chatArea.setLayout(new BorderLayout());
+		
+		//create panel to display connected users
+		JPanel usersArea = new JPanel();
+		usersArea.setPreferredSize(new Dimension(150, 400));
+		usersArea.setLayout(new BorderLayout());
+		
+		//add text area to chat area and usersArea
+		chatArea.add(chatTextArea, BorderLayout.CENTER);
+		chatArea.setBorder(BorderFactory.createLineBorder(Color.black));
+		
+		usersArea.add(usersText, BorderLayout.CENTER);
+		usersArea.setBorder(BorderFactory.createLineBorder(Color.black));
+		
+		JLabel uLabel = new JLabel();
+		uLabel.setText("Online users");
+		
+		// add label to users area
+		usersArea.add(uLabel, BorderLayout.NORTH);
+		
+		
+		//add chat area and users area to panel
+		chatRoom.add(chatArea, BorderLayout.WEST);
+		chatRoom.add(usersArea, BorderLayout.EAST);
+		
+		//username textfield
+		JTextField usernameField = new JTextField("Your username");
+		usernameField.setPreferredSize(new Dimension(100, 30));
+		
+		
+		//IP and port input fields
+		JTextField ipAdd = new JTextField("127.0.0.1");
+		ipAdd.setPreferredSize(new Dimension(100, 30));
+		JTextField portNum = new JTextField("3002");
+		portNum.setPreferredSize(new Dimension(50, 30));
+		
+		//connect button
+		JButton connect = new JButton();
+		connect.setPreferredSize(new Dimension (100, 30));
+		connect.setText("Connect");
+		connect.addActionListener(new ActionListener() {
+		
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String username = usernameField.getText();
+					usersText.append("\n" + username);
+					
+					connect.setText("Reconnect");
+				
+				}
+			}
+		);
+		
+		
+		
+		//create panel to hold multiple controls
+		JPanel userInput = new JPanel();
+		
+		//setup textfield
+		JTextField messageField = new JTextField();
+		messageField.setPreferredSize(new Dimension(100, 30));
+		
+		
+		//setup submit button
+		JButton send = new JButton();
+		send.setPreferredSize(new Dimension(100, 30));
+		send.setText("Send");
+		send.addActionListener(new ActionListener () {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String message = messageField.getText();
+				String username = usernameField.getText();
+		
+				
+				if(message.length()> 0) {
+					//append a new line & text from textfield to textarea
+					chatTextArea.append("\n" + username + ": " + messageField.getText());
+					//reset textfield
+					messageField.setText("");
+				}
+			}
+			
+			
+		});
+		
+		//add username input and connect input 
+		topConnect.add(usernameField);
+		topConnect.add(ipAdd);
+		topConnect.add(portNum);
+		topConnect.add(connect);
+		
+		//add textfield and button to panel
+		userInput.add(messageField);
+		userInput.add(send);
+		
+		//add panels to chatRoom panel
+		chatRoom.add(userInput, BorderLayout.SOUTH);
+		chatRoom.add(topConnect, BorderLayout.NORTH);
+		
+		
+		//add chatRoom panel to frame
+		frame.add(chatRoom, BorderLayout.CENTER);
+		
+		frame.pack();
+		frame.setVisible(true);
+		
+		
+		client.connect(ipAdd.getText(), Integer.parseInt(portNum.getText()));
 		try {
-			client.start(client.clientName);
+			//if start is private, it's valid here since this main is part of the class
+			client.start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 
 }

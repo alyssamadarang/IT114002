@@ -10,7 +10,7 @@ public class ServerThread extends Thread{
 	private boolean isRunning = false;
 	private SocketServer server;//ref to our server so we can call methods on it
 	//more easily
-	private String clientName = "";
+	private String clientName = "Anon";
 	public ServerThread(Socket myClient, SocketServer server) throws IOException {
 		this.client = myClient;
 		this.server = server;
@@ -24,7 +24,23 @@ public class ServerThread extends Thread{
 		//so we won't see that we connected. Jump down to run()
 		//broadcastConnected();
 	}
+	public void setClientId(long id) {
+		clientName += "_" + id;
+	}
+	void syncStateToMyClient() {
+		System.out.println(this.clientName + " broadcast state");
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.STATE_SYNC);
+		payload.IsOn(server.state.isButtonOn);
+		try {
+			out.writeObject(payload);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	void broadcastConnected() {
+		System.out.println(this.clientName + " broadcast connected");
 		Payload payload = new Payload();
 		payload.setPayloadType(PayloadType.CONNECT);
 		//note we don't need to specify message as it'll be handle by the server
@@ -100,14 +116,21 @@ public class ServerThread extends Thread{
 				this.clientName = m;
 			}
 			broadcastConnected();
+			syncStateToMyClient();
+			
 			break;
 		case DISCONNECT:
 			System.out.println("Received disconnect");
 			break;
 		case MESSAGE:
 			//we can just pass the whole payload onward
-			payload.setMessage(WordBlackList.filter(payload.getMessage()));
+			//payload.setMessage(WordBlackList.filter(payload.getMessage()));
 			server.broadcast(payload, this.clientName);
+			break;
+		case SEND:
+			//whatever we get from the client, just tell everyone else, ok?
+			payload.setMessage(this.clientName);
+			server.sendButton(payload);
 			break;
 		default:
 			System.out.println("Unhandled payload type from client " + payload.getPayloadType());
