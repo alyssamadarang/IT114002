@@ -1,4 +1,4 @@
-
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import com.google.gson.Gson;
 
 
 public class SocketServer {
@@ -17,11 +18,26 @@ public class SocketServer {
 	private List<ServerThread> clients = new ArrayList<ServerThread>();
 	//We'll use a queue and a thread to separate our chat history
 	Queue<String> messages = new LinkedList<String>();
+	public GameState state = new GameState();
+	public static long ClientID = 0;
+	public synchronized long getNextId() {
+		ClientID++;
+		return ClientID;
+	}
+	public synchronized void toggleButton(Payload payload) {
+		if(state.isButtonOn && !payload.IsOn()) {
+			state.isButtonOn = false;
+			broadcast(payload);
+		}
+		else if (!state.isButtonOn && payload.IsOn()) {
+			state.isButtonOn = true;
+			broadcast(payload);
+		}
+	}
 	private void start(int port) {
 		this.port = port;
 		startQueueReader();
-	
-	
+		
 		System.out.println("Waiting for client");
 		try (ServerSocket serverSocket = new ServerSocket(port);) {
 			while(SocketServer.isRunning) {
@@ -31,6 +47,7 @@ public class SocketServer {
 					//Server thread is the server's representation of the client
 					ServerThread thread = new ServerThread(client, this);
 					thread.start();
+					thread.setClientId(getNextId());
 					//add client thread to list of clients
 					clients.add(thread);
 					System.out.println("Client added to clients pool");
@@ -52,7 +69,6 @@ public class SocketServer {
 			}
 		}
 	}
-
 	
 	void startQueueReader() {
 		System.out.println("Preparing Queue Reader");
@@ -103,8 +119,7 @@ public class SocketServer {
 	}
 	public synchronized void broadcast(Payload payload) {
 		System.out.println("Sending message to " + clients.size() + " clients");
-		//TODO record message
-		storeInFile(payload.getMessage());
+		
 		Iterator<ServerThread> iter = clients.iterator();
 		while(iter.hasNext()) {
 			ServerThread client = iter.next();
@@ -143,17 +158,11 @@ public class SocketServer {
 		payload.setMessage(message);
 		broadcast(payload, id);
 	}
-	void storeInFile(String message) {
-		//add our message to our queue
-		messages.add(message);
-		//we'll have a separate thread do the actual saving for now
-	}
-
 	public static void main(String[] args) {
 		//let's allow port to be passed as a command line arg
 		//in eclipse you can set this via "Run Configurations" 
 		//	-> "Arguments" -> type the port in the text box -> Apply
-		int port = 3002;//make some default
+		int port = 3001;//make some default
 		if(args.length >= 1) {
 			String arg = args[0];
 			try {
@@ -169,4 +178,7 @@ public class SocketServer {
 		server.start(port);
 		System.out.println("Server Stopped");
 	}
+}
+class GameState{
+	boolean isButtonOn = false;
 }

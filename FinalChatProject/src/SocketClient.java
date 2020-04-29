@@ -1,27 +1,44 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Scanner;
+import java.util.LinkedList;
+import java.util.Queue;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
 public class SocketClient {
-	Socket server;
+	private Socket server;
+	private OnReceive switchListener;
+	public void registerSwitchListener(OnReceive listener) {
+		this.switchListener = listener;
+	}
+	private OnReceive messageListener;
+	public void registerMessageListener(OnReceive listener) {
+		this.messageListener = listener;
+	}
+	private Queue<Payload> toServer = new LinkedList<Payload>();
+	private Queue<Payload> fromServer = new LinkedList<Payload>();
 	
-	public void connect(String address, int port) {
+	public static SocketClient connect(String address, int port) {
+		SocketClient client = new SocketClient();
+		client._connect(address, port);
+		Thread clientThread =  new Thread() {
+			@Override
+			public void run() {
+				client.start();
+			}
+		};
+		clientThread.start();
+		try {
+			Thread.sleep(50);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return client;
+	}
+	private void _connect(String address, int port) {
 		try {
 			server = new Socket(address, port);
 			System.out.println("Client connected");
@@ -31,57 +48,30 @@ public class SocketClient {
 			e.printStackTrace();
 		}
 	}
-	public void start() throws IOException {
+	public void start() {
 		if(server == null) {
 			return;
 		}
 		System.out.println("Client Started");
 		//listen to console, server in, and write to server out
-		try(Scanner si = new Scanner(System.in);
-				ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
+		try(	ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
 				ObjectInputStream in = new ObjectInputStream(server.getInputStream());){
-			//let's block the thread for a sec to gather a username
-			String name ="";
-			do {
-				name = "";
-			}
-			while(!server.isClosed() && name != null && name.length() == 0);
-			//we should have a name, let's tell our server
-			Payload p = new Payload();
-			//we can also default payloadtype in payload
-			//to a desired value, though it's good to be clear
-			//what we're sending
-			p.setPayloadType(PayloadType.CONNECT);
-			p.setMessage(name);
-			out.writeObject(p);
-			
-			
-			//Thread to listen for keyboard input so main thread isn't blocked
 			Thread inputThread = new Thread() {
 				@Override
 				public void run() {
 					try {
 						while(!server.isClosed()) {
-							System.out.println("Waiting for input");
-							String line = si.nextLine();
-							if(!"quit".equalsIgnoreCase(line) && line != null) {
-								//grab line and throw it into a payload object
-								Payload p = new Payload();
-								//we can also default payloadtype in payload
-								//to a desired value, though it's good to be clear
-								//what we're sending
-								p.setPayloadType(PayloadType.MESSAGE);
-								p.setMessage(line);
+							Payload p = toServer.poll();
+							if(p != null) {
 								out.writeObject(p);
 							}
 							else {
-								System.out.println("Stopping input thread");
-								//we're quitting so tell server we disconnected so it can broadcast
-								Payload p = new Payload();
-								p.setPayloadType(PayloadType.DISCONNECT);
-								p.setMessage("bye");
-								out.writeObject(p);
-								break;
+								try {
+									Thread.sleep(8);
+								}
+								catch (Exception e) {
+									e.printStackTrace();
+								}
 							}
 						}
 					}
@@ -100,11 +90,12 @@ public class SocketClient {
 				@Override
 				public void run() {
 					try {
-						Payload fromServer;
+						Payload p;
 						//while we're connected, listen for payloads from server
-						while(!server.isClosed() && (fromServer = (Payload)in.readObject()) != null) {
+						while(!server.isClosed() && (p = (Payload)in.readObject()) != null) {
 							//System.out.println(fromServer);
-							processPayload(fromServer);
+							//processPayload(fromServer);
+							fromServer.add(p);
 						}
 						System.out.println("Stopping server listen thread");
 					}
@@ -124,6 +115,27 @@ public class SocketClient {
 			};
 			fromServerThread.start();//start the thread
 			
+			
+			Thread payloadProcessor = new Thread(){
+				@Override
+				public void run() {
+					while(!server.isClosed()) {
+						Payload p = fromServer.poll();
+						if(p != null) {
+							processPayload(p);
+						}
+						else {
+							try {
+								Thread.sleep(8);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			};
+			payloadProcessor.start();
 			//Keep main thread alive until the socket is closed
 			//initialize/do everything before this line
 			while(!server.isClosed()) {
@@ -141,23 +153,69 @@ public class SocketClient {
 			close();
 		}
 	}
+	public void postConnectionData() {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.CONNECT);
+		//payload.IsOn(isOn);
+		toServer.add(payload);
+	}
+	public void doClick(boolean isOn) {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.SWITCH);
+		payload.IsOn(isOn);
+		toServer.add(payload);
+	}
+	public void sendMessage(String message) {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.MESSAGE);
+		payload.setMessage(message);
+		toServer.add(payload);
+	}
 	private void processPayload(Payload payload) {
 		System.out.println(payload);
+		String msg = "";
 		switch(payload.getPayloadType()) {
 		case CONNECT:
-			System.out.println(
-					String.format("Client \"%s\" connected", payload.getMessage())
-			);
+			msg = String.format("Client \"%s\" connected", payload.getMessage());
+			System.out.println(msg);
+			if(messageListener != null) {
+				messageListener.onReceivedMessage(msg);
+			}
 			break;
 		case DISCONNECT:
-			System.out.println(
-					String.format("Client \"%s\" disconnected", payload.getMessage())
-			);
+			msg = String.format("Client \"%s\" disconnected", payload.getMessage());
+			System.out.println(msg);
+			if(messageListener != null) {
+				messageListener.onReceivedMessage(msg);
+			}
 			break;
 		case MESSAGE:
 			System.out.println(
 					String.format("%s", payload.getMessage())
 			);
+			if(messageListener != null) {
+				messageListener.onReceivedMessage(
+						String.format("%s", 
+								payload.getMessage())
+								
+				);
+			}
+			break;
+		case STATE_SYNC:
+			System.out.println("Sync");
+			//break; //this state will drop down to next state
+		case SWITCH:
+			System.out.println("switch");
+			if (switchListener != null) {
+				switchListener.onReceivedSwitch(payload.IsOn());
+			}
+			if(messageListener != null) {
+				messageListener.onReceivedMessage(
+						String.format("%s turned the button %s", 
+								payload.getMessage(),
+								payload.IsOn()?"On":"Off")
+				);
+			}
 			break;
 		default:
 			System.out.println("Unhandled payload type: " + payload.getPayloadType().toString());
@@ -176,147 +234,18 @@ public class SocketClient {
 	}
 	public static void main(String[] args) {
 		SocketClient client = new SocketClient();
-		
-		//create frame
-		JFrame frame = new JFrame("Chat Room"); 
-		frame.setLayout(new BorderLayout());
-		
-		//create panel
-		JPanel chatRoom = new JPanel();
-		chatRoom.setPreferredSize(new Dimension (400,400));
-		chatRoom.setLayout(new BorderLayout());
-		
-		//create top panel
-		JPanel topConnect = new JPanel();
-		
-		
-		//create text area for messages and displaying users
-		JTextArea chatTextArea = new JTextArea();
-		JTextArea usersText = new JTextArea();
-		
-		//don't let the user edit this directly
-		chatTextArea.setEditable(false);
-		chatTextArea.setText("");
-		
-		//create panel to hold multiple controls
-		JPanel chatArea = new JPanel();
-		chatArea.setPreferredSize(new Dimension(250, 400));
-		chatArea.setLayout(new BorderLayout());
-		
-		//create panel to display connected users
-		JPanel usersArea = new JPanel();
-		usersArea.setPreferredSize(new Dimension(150, 400));
-		usersArea.setLayout(new BorderLayout());
-		
-		//add text area to chat area and usersArea
-		chatArea.add(chatTextArea, BorderLayout.CENTER);
-		chatArea.setBorder(BorderFactory.createLineBorder(Color.black));
-		
-		usersArea.add(usersText, BorderLayout.CENTER);
-		usersArea.setBorder(BorderFactory.createLineBorder(Color.black));
-		
-		JLabel uLabel = new JLabel();
-		uLabel.setText("Online users");
-		
-		// add label to users area
-		usersArea.add(uLabel, BorderLayout.NORTH);
-		
-		
-		//add chat area and users area to panel
-		chatRoom.add(chatArea, BorderLayout.WEST);
-		chatRoom.add(usersArea, BorderLayout.EAST);
-		
-		//username textfield
-		JTextField usernameField = new JTextField("Your username");
-		usernameField.setPreferredSize(new Dimension(100, 30));
-		
-		
-		//IP and port input fields
-		JTextField ipAdd = new JTextField("127.0.0.1");
-		ipAdd.setPreferredSize(new Dimension(100, 30));
-		JTextField portNum = new JTextField("3002");
-		portNum.setPreferredSize(new Dimension(50, 30));
-		
-		//connect button
-		JButton connect = new JButton();
-		connect.setPreferredSize(new Dimension (100, 30));
-		connect.setText("Connect");
-		connect.addActionListener(new ActionListener() {
-		
-				
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					String username = usernameField.getText();
-					usersText.append("\n" + username);
-					
-					connect.setText("Reconnect");
-				
-				}
-			}
-		);
-		
-		
-		
-		//create panel to hold multiple controls
-		JPanel userInput = new JPanel();
-		
-		//setup textfield
-		JTextField messageField = new JTextField();
-		messageField.setPreferredSize(new Dimension(100, 30));
-		
-		
-		//setup submit button
-		JButton send = new JButton();
-		send.setPreferredSize(new Dimension(100, 30));
-		send.setText("Send");
-		send.addActionListener(new ActionListener () {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String message = messageField.getText();
-				String username = usernameField.getText();
-		
-				
-				if(message.length()> 0) {
-					//append a new line & text from textfield to textarea
-					chatTextArea.append("\n" + username + ": " + messageField.getText());
-					//reset textfield
-					messageField.setText("");
-				}
-			}
-			
-			
-		});
-		
-		//add username input and connect input 
-		topConnect.add(usernameField);
-		topConnect.add(ipAdd);
-		topConnect.add(portNum);
-		topConnect.add(connect);
-		
-		//add textfield and button to panel
-		userInput.add(messageField);
-		userInput.add(send);
-		
-		//add panels to chatRoom panel
-		chatRoom.add(userInput, BorderLayout.SOUTH);
-		chatRoom.add(topConnect, BorderLayout.NORTH);
-		
-		
-		//add chatRoom panel to frame
-		frame.add(chatRoom, BorderLayout.CENTER);
-		
-		frame.pack();
-		frame.setVisible(true);
-		
-		
-		client.connect(ipAdd.getText(), Integer.parseInt(portNum.getText()));
+		client.connect("127.0.0.1", 3001);
 		try {
 			//if start is private, it's valid here since this main is part of the class
 			client.start();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+}
+
+interface OnReceive{
+	void onReceivedSwitch(boolean isOn);
+	void onReceivedMessage(String msg);
 }
