@@ -12,14 +12,14 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class ChatUI extends JFrame implements OnReceive {
+public class ChatterBox extends JFrame implements OnReceive {
 	// public SampleSocketClient client = new SampleSocketClient(); connect to Client
 	static SocketClient client;
 	static JTextArea chatLog;
 	public static void main(String[] args) {
 		//create frame
 		//JFrame frame = new JFrame("Chat Room"); 
-		ChatUI frame = new ChatUI();
+		ChatterBox frame = new ChatterBox();
 		frame.setLayout(new BorderLayout());
 		
 		//create panel
@@ -46,27 +46,27 @@ public class ChatUI extends JFrame implements OnReceive {
 		chatArea.setLayout(new BorderLayout());
 		
 		//create panel to display connected users
-		JPanel usersArea = new JPanel();
-		usersArea.setPreferredSize(new Dimension(150, 400));
-		usersArea.setLayout(new BorderLayout());
+		//JPanel usersArea = new JPanel();
+		//usersArea.setPreferredSize(new Dimension(150, 400));
+		//usersArea.setLayout(new BorderLayout());
 		
 		//add text area to chat area and usersArea
 		chatArea.add(chatTextArea, BorderLayout.CENTER);
 		chatArea.setBorder(BorderFactory.createLineBorder(Color.black));
 		
-		usersArea.add(usersText, BorderLayout.CENTER);
-		usersArea.setBorder(BorderFactory.createLineBorder(Color.black));
+		//usersArea.add(usersText, BorderLayout.CENTER);
+		//usersArea.setBorder(BorderFactory.createLineBorder(Color.black));
 		
-		JLabel uLabel = new JLabel();
-		uLabel.setText("Online users");
+		//JLabel uLabel = new JLabel();
+		//uLabel.setText("Online users");
 		
 		// add label to users area
-		usersArea.add(uLabel, BorderLayout.NORTH);
+		//usersArea.add(uLabel, BorderLayout.NORTH);
 		
 		
 		//add chat area and users area to panel
-		chatRoom.add(chatArea, BorderLayout.WEST);
-		chatRoom.add(usersArea, BorderLayout.EAST);
+		chatRoom.add(chatArea, BorderLayout.CENTER);
+		//chatRoom.add(usersArea, BorderLayout.EAST);
 		
 		//username textfield
 		JTextField usernameField = new JTextField("Your username");
@@ -97,17 +97,7 @@ public class ChatUI extends JFrame implements OnReceive {
 		    	}
 		    	if(_port > -1) {
 			    	client = SocketClient.connect(ipAdd.getText(), _port);
-			    	
-			    	//METHOD 1 Using the interface
-			    	//client.registerSwitchListener(frame);
-			    	//METHOD 2 Lamba Expression (unnamed function to handle callback)
-			    	/*client.registerListener(()->{	
-			    		if(UISample.toggle != null) {
-			    			UISample.toggle.setText("OFF");
-			    			UISample.toggle.setBackground(Color.RED);
-			    		}
-			    	});*/
-			    	
+			    
 			    	
 			    	//trigger any one-time data after client connects
 			    	

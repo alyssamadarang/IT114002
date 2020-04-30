@@ -27,6 +27,7 @@ public class Payload implements Serializable{
 		return this.payloadType;
 	}
 	
+	/**
 	private int number;
 	public void setNumber(int n) {
 		this.number = n;
@@ -34,9 +35,12 @@ public class Payload implements Serializable{
 	public int getNumber() {
 		return this.number;
 	}
+	
+	**/
+	
 	@Override
 	public String toString() {
-		return String.format("Type[%s], isOn[%s], Number[%s], Message[%s]",
-					getPayloadType().toString(), IsOn()+"", getNumber(), getMessage());
+		return String.format("Type[%s], isOn[%s], Message[%s]",
+					getPayloadType().toString(), IsOn(),  getMessage());
 	}
 }
