@@ -11,6 +11,10 @@ import java.util.Queue;
 public class SocketClient {
 	private Socket server;
 	private OnReceive switchListener;
+	
+	
+	private String clientName ="";
+	
 	public void registerSwitchListener(OnReceive listener) {
 		this.switchListener = listener;
 	}
@@ -18,8 +22,20 @@ public class SocketClient {
 	public void registerMessageListener(OnReceive listener) {
 		this.messageListener = listener;
 	}
+	
 	private Queue<Payload> toServer = new LinkedList<Payload>();
 	private Queue<Payload> fromServer = new LinkedList<Payload>();
+	
+	// getters and setters
+	
+	public String getClientName() {
+		return clientName;
+	}
+	
+	public void setClientName(String name) {
+		clientName = name;
+	}
+
 	
 	public static SocketClient connect(String address, int port) {
 		SocketClient client = new SocketClient();
@@ -209,13 +225,14 @@ public class SocketClient {
 			if (switchListener != null) {
 				switchListener.onReceivedSwitch(payload.IsOn());
 			}
-			if(messageListener != null) {
+			/**if(messageListener != null) {
 				messageListener.onReceivedMessage(
 						String.format("%s turned the button %s", 
 								payload.getMessage(),
 								payload.IsOn()?"On":"Off")
 				);
 			}
+			**/
 			break;
 		default:
 			System.out.println("Unhandled payload type: " + payload.getPayloadType().toString());
@@ -234,7 +251,7 @@ public class SocketClient {
 	}
 	public static void main(String[] args) {
 		SocketClient client = new SocketClient();
-		client.connect("127.0.0.1", 3001);
+		client.connect("127,0.0.1", 3001);
 		try {
 			//if start is private, it's valid here since this main is part of the class
 			client.start();

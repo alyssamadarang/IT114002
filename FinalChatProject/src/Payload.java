@@ -6,12 +6,31 @@ public class Payload implements Serializable{
 	private static final long serialVersionUID = -6625037986217386003L;
 	private String message;
 	private boolean isOn = false;
+	private boolean isBold = false;
+	private boolean isItalic = false;
+	
+	
 	public void IsOn(boolean isOn) {
 		this.isOn = isOn;
 	}
 	public boolean IsOn() {
 		return this.isOn;
 	}
+	
+	public void IsBold(boolean isBold) {
+		this.isBold = isBold;
+	}
+	public boolean IsBold() {
+		return this.isBold;
+	}
+	
+	public void IsItalic(boolean isItalic) {
+		this.isItalic = isItalic;
+	}
+	public boolean IsItalic() {
+		return this.isItalic;
+	}
+	
 	public void setMessage(String s) {
 		this.message = s;
 	}

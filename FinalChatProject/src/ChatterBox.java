@@ -1,21 +1,25 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 public class ChatterBox extends JFrame implements OnReceive {
 	// public SampleSocketClient client = new SampleSocketClient(); connect to Client
 	static SocketClient client;
 	static JTextArea chatLog;
+
+	
+	static JToggleButton tBold = new JToggleButton("B"); 
+	static JToggleButton tItalic = new JToggleButton("I"); 
+	static Font bold = new Font("Arial", Font.BOLD, 12);
+	static Font italic = new Font("Arial", Font.ITALIC, 12);
+	static Font both = new Font("Arial", Font.BOLD + Font.ITALIC, 12);
+
+
 	public static void main(String[] args) {
 		//create frame
 		//JFrame frame = new JFrame("Chat Room"); 
@@ -76,13 +80,16 @@ public class ChatterBox extends JFrame implements OnReceive {
 		//IP and port input fields
 		JTextField ipAdd = new JTextField("127.0.0.1");
 		ipAdd.setPreferredSize(new Dimension(100, 30));
+		
 		JTextField portNum = new JTextField("3001");
 		portNum.setPreferredSize(new Dimension(50, 30));
+
 		
 		//connect button
 		JButton connect = new JButton();
 		connect.setPreferredSize(new Dimension (100, 30));
 		connect.setText("Connect");
+	
 		
 		
 		connect.addActionListener(new ActionListener() {
@@ -97,7 +104,7 @@ public class ChatterBox extends JFrame implements OnReceive {
 		    	}
 		    	if(_port > -1) {
 			    	client = SocketClient.connect(ipAdd.getText(), _port);
-			    
+					client.setClientName(usernameField.getText());
 			    	
 			    	//trigger any one-time data after client connects
 			    	
@@ -109,14 +116,22 @@ public class ChatterBox extends JFrame implements OnReceive {
 		    }
 		});
 		
-		
-		
+	
+
+
 		//create panel to hold multiple controls
 		JPanel userInput = new JPanel();
 		
+
+		
+		
+		
 		//setup textfield
 		JTextField messageField = new JTextField();
+	
 		messageField.setPreferredSize(new Dimension(100, 30));
+		
+
 		
 		
 		//setup submit button
@@ -129,13 +144,25 @@ public class ChatterBox extends JFrame implements OnReceive {
 			public void actionPerformed(ActionEvent e) {
 				String message = messageField.getText();
 				String username = usernameField.getText();
+				
 		
 				
 				if(message.length()> 0) {
 					//append a new line & text from textfield to textarea
 					//chatTextArea.append("\n" + username + ": " + messageField.getText());
 					//reset textfield
-					client.sendMessage(messageField.getText());
+					if (message.equals("/roll")) {
+						int rand = (int) (Math.random() * 101);
+						client.sendMessage("Random number: "+ Integer.toString(rand));
+					}
+					else if (message.equals("/flip")) {
+						String[] flip = {"HEADS", "TAILS"};
+						int rand = (int) (Math.random() * 2);
+						client.sendMessage("Flipped coin: " + flip[rand]);
+					}
+					else {
+						client.sendMessage(messageField.getText());
+					}
 					messageField.setText("");
 				}
 			}
@@ -152,6 +179,9 @@ public class ChatterBox extends JFrame implements OnReceive {
 		//add textfield and button to panel
 		userInput.add(messageField);
 		userInput.add(send);
+		userInput.add(tBold);
+		userInput.add(tItalic);
+		
 		
 		//add panels to chatRoom panel
 		chatRoom.add(userInput, BorderLayout.SOUTH);
@@ -176,5 +206,7 @@ public class ChatterBox extends JFrame implements OnReceive {
 		chatLog.append(msg);
 		chatLog.append(System.lineSeparator());
 	}
+	
+	
 
 }
