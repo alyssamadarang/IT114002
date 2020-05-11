@@ -11,13 +11,13 @@ public class ChatterBox extends JFrame implements OnReceive {
 	// public SampleSocketClient client = new SampleSocketClient(); connect to Client
 	static SocketClient client;
 	static JTextArea chatLog;
-
 	
 	static JToggleButton tBold = new JToggleButton("B"); 
 	static JToggleButton tItalic = new JToggleButton("I"); 
 	static Font bold = new Font("Arial", Font.BOLD, 12);
 	static Font italic = new Font("Arial", Font.ITALIC, 12);
 	static Font both = new Font("Arial", Font.BOLD + Font.ITALIC, 12);
+	static Font normal = new Font("Arial", Font.PLAIN, 12);
 
 
 	public static void main(String[] args) {
@@ -25,6 +25,7 @@ public class ChatterBox extends JFrame implements OnReceive {
 		//JFrame frame = new JFrame("Chat Room"); 
 		ChatterBox frame = new ChatterBox();
 		frame.setLayout(new BorderLayout());
+
 		
 		//create panel
 		JPanel chatRoom = new JPanel();
@@ -73,9 +74,10 @@ public class ChatterBox extends JFrame implements OnReceive {
 		//chatRoom.add(usersArea, BorderLayout.EAST);
 		
 		//username textfield
+		/**
 		JTextField usernameField = new JTextField("Your username");
 		usernameField.setPreferredSize(new Dimension(100, 30));
-		
+		**/
 		
 		//IP and port input fields
 		JTextField ipAdd = new JTextField("127.0.0.1");
@@ -104,7 +106,7 @@ public class ChatterBox extends JFrame implements OnReceive {
 		    	}
 		    	if(_port > -1) {
 			    	client = SocketClient.connect(ipAdd.getText(), _port);
-					client.setClientName(usernameField.getText());
+					//client.setClientName(usernameField.getText());
 			    	
 			    	//trigger any one-time data after client connects
 			    	
@@ -143,7 +145,7 @@ public class ChatterBox extends JFrame implements OnReceive {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String message = messageField.getText();
-				String username = usernameField.getText();
+				//String username = usernameField.getText();
 				
 		
 				
@@ -160,10 +162,27 @@ public class ChatterBox extends JFrame implements OnReceive {
 						int rand = (int) (Math.random() * 2);
 						client.sendMessage("Flipped coin: " + flip[rand]);
 					}
+	
 					else {
+						/**
+						if (tBold.isSelected() && !tItalic.isSelected()) {
+							client.sendMessage(messageField.getText());
+						}
+						else if (!tBold.isSelected() && tItalic.isSelected()) {
+							client.sendMessage(messageField.getText());
+						}
+						else if (tBold.isSelected() && tItalic.isSelected()) {
+							client.sendMessage(messageField.getText());
+						}
+						else {
+							client.sendMessage(messageField.getText());
+						}
+						**/
 						client.sendMessage(messageField.getText());
+						
 					}
 					messageField.setText("");
+			
 				}
 			}
 			
@@ -171,7 +190,7 @@ public class ChatterBox extends JFrame implements OnReceive {
 		});
 		
 		//add username input and connect input 
-		topConnect.add(usernameField);
+		//topConnect.add(usernameField);
 		topConnect.add(ipAdd);
 		topConnect.add(portNum);
 		topConnect.add(connect);
@@ -199,14 +218,46 @@ public class ChatterBox extends JFrame implements OnReceive {
 		// TODO Auto-generated method stub
 		
 	}
+	
 	@Override
 	public void onReceivedMessage(String msg) {
 		// TODO Auto-generated method stub
 		System.out.println(msg);
+		
+		if (tBold.isSelected() && !tItalic.isSelected()) {
+			chatLog.setFont(bold);
+		}
+		else if (!tBold.isSelected() && tItalic.isSelected()) {
+			chatLog.setFont(italic);
+		}
+		else if (tBold.isSelected() && tItalic.isSelected()) {
+			chatLog.setFont(both);
+		}
+		else if (!tBold.isSelected() && !tItalic.isSelected()) {
+			chatLog.setFont(normal);
+		}
+		
 		chatLog.append(msg);
 		chatLog.append(System.lineSeparator());
 	}
-	
-	
+	/**
+	@Override
+	public void onReceivedStyleMessage(boolean isBold, boolean isItalic) {
+		// TODO Auto-generated method stub
+		if (isBold && isItalic) {
+			chatLog.setFont(both);
+		}
+		else if (isBold && !isItalic) {
+			chatLog.setFont(bold);
+		} 
+		else if (!isBold && isItalic) {
+			chatLog.setFont(italic);
+		}
+		else {
+			chatLog.setFont(normal);
+		}
 
+	}
+	**/
+		
 }

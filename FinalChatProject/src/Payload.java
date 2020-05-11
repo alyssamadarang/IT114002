@@ -8,6 +8,7 @@ public class Payload implements Serializable{
 	private boolean isOn = false;
 	private boolean isBold = false;
 	private boolean isItalic = false;
+
 	
 	
 	public void IsOn(boolean isOn) {
@@ -16,21 +17,23 @@ public class Payload implements Serializable{
 	public boolean IsOn() {
 		return this.isOn;
 	}
-	
+
 	public void IsBold(boolean isBold) {
 		this.isBold = isBold;
 	}
 	public boolean IsBold() {
 		return this.isBold;
 	}
-	
+
 	public void IsItalic(boolean isItalic) {
 		this.isItalic = isItalic;
 	}
 	public boolean IsItalic() {
 		return this.isItalic;
 	}
-	
+
+
+
 	public void setMessage(String s) {
 		this.message = s;
 	}
@@ -60,6 +63,6 @@ public class Payload implements Serializable{
 	@Override
 	public String toString() {
 		return String.format("Type[%s], isOn[%s], Message[%s]",
-					getPayloadType().toString(), IsOn(),  getMessage());
+					getPayloadType().toString(), IsOn(), getMessage());
 	}
 }

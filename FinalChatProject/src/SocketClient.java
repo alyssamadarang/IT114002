@@ -13,7 +13,8 @@ public class SocketClient {
 	private OnReceive switchListener;
 	
 	
-	private String clientName ="";
+	//private String clientName ="";
+
 	
 	public void registerSwitchListener(OnReceive listener) {
 		this.switchListener = listener;
@@ -22,12 +23,13 @@ public class SocketClient {
 	public void registerMessageListener(OnReceive listener) {
 		this.messageListener = listener;
 	}
+
 	
 	private Queue<Payload> toServer = new LinkedList<Payload>();
 	private Queue<Payload> fromServer = new LinkedList<Payload>();
 	
 	// getters and setters
-	
+	/**
 	public String getClientName() {
 		return clientName;
 	}
@@ -35,7 +37,7 @@ public class SocketClient {
 	public void setClientName(String name) {
 		clientName = name;
 	}
-
+	*/
 	
 	public static SocketClient connect(String address, int port) {
 		SocketClient client = new SocketClient();
@@ -181,12 +183,29 @@ public class SocketClient {
 		payload.IsOn(isOn);
 		toServer.add(payload);
 	}
+	
+	
 	public void sendMessage(String message) {
 		Payload payload = new Payload();
 		payload.setPayloadType(PayloadType.MESSAGE);
 		payload.setMessage(message);
 		toServer.add(payload);
 	}
+	
+
+	/**
+	public void styleMessage(boolean isBold, boolean isItalic) {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.STYLEMESSAGE);
+		payload.IsBold(isBold);
+		payload.IsItalic(isItalic);
+		toServer.add(payload);
+		
+	}
+	
+	
+**/
+	
 	private void processPayload(Payload payload) {
 		System.out.println(payload);
 		String msg = "";
@@ -216,7 +235,22 @@ public class SocketClient {
 								
 				);
 			}
+
 			break;
+			/**
+		case STYLEMESSAGE:
+			System.out.println(
+					String.format("%s", payload.getMessage())
+			);
+			if(messageListener != null) {
+				messageListener.onReceivedStyleMessage(
+
+									payload.IsBold(),
+									payload.IsItalic()
+									
+				);
+			}
+			**/
 		case STATE_SYNC:
 			System.out.println("Sync");
 			//break; //this state will drop down to next state
@@ -265,4 +299,6 @@ public class SocketClient {
 interface OnReceive{
 	void onReceivedSwitch(boolean isOn);
 	void onReceivedMessage(String msg);
+	//void onReceivedStyleMessage(boolean isBold, boolean isItalic);
+
 }

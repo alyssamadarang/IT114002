@@ -4,8 +4,7 @@ public enum PayloadType {
 	DISCONNECT,
 	MESSAGE,
 	SWITCH,
-	STATE_SYNC,
-	BOLD,
-	ITALIC
-	
+	STATE_SYNC
+	//	STYLEMESSAGE,
+
 }

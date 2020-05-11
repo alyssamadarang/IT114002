@@ -6,5 +6,7 @@
     <fullyQualifiedTypeName name="java.awt.event.ActionEvent"/>
     <fullyQualifiedTypeName name="java.awt.event.ActionListener"/>
     <fullyQualifiedTypeName name="javax.swing.JPanel"/>
+    <fullyQualifiedTypeName name="javax.swing.JToggleButton"/>
+    <fullyQualifiedTypeName name="java.awt.Font"/>
     <fullyQualifiedTypeName name="javax.swing.JLabel"/>
 </qualifiedTypeNameHistroy>

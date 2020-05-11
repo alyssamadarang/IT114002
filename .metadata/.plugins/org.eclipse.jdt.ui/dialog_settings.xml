@@ -26,4 +26,21 @@
 	<section name="ClasspathContainerSelectionPage">
 		<item key="index" value="0"/>
 	</section>
+	<section name="FatJarPackageWizard">
+		<item key="FatJarPackageWizardPage.ANTSCRIPT_SAVE" value="true"/>
+		<item key="FatJarPackageWizardPage.ANTSCRIPT_LOCATION" value="/Users/alyssamadarang/IT114002/FinalChatProject/build/buildserver.xml"/>
+		<item key="FatJarPackageWizardPage.LIBRARY_HANDLING" value="1"/>
+		<item key="FatJarPackageWizardPage.LAUNCH_CONFIGURATION_SELECTION_NAME" value="SocketServer - FinalChatProject"/>
+		<item key="FatJarPackageWizardPage.DESTINATION_PATH_SELECTION" value="FinalChatProject/build/SocketServer.jar"/>
+		<list key="FatJarPackageWizardPage.DESTINATION_NAMES_ID">
+			<item value="FinalChatProject/build/SocketServer.jar"/>
+			<item value="FinalChatProject/build/ChatterBoxUI.jar"/>
+		</list>
+		<list key="FatJarPackageWizardPage.ANTSCRIPT_LOCATION_HISTORY">
+			<item value="/Users/alyssamadarang/IT114002/FinalChatProject/build/buildserver.xml"/>
+			<item value="/Users/alyssamadarang/IT114002/FinalChatProject/build/build.xml"/>
+			<item value="/Users/alyssamadarang/IT114002/FinalChatProject/build/IT114002.xml"/>
+			<item value=".xml"/>
+		</list>
+	</section>
 </section>

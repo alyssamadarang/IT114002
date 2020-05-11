@@ -34,6 +34,8 @@ public class SocketServer {
 			broadcast(payload);
 		}
 	}
+	
+	
 	private void start(int port) {
 		this.port = port;
 		startQueueReader();
@@ -158,6 +160,9 @@ public class SocketServer {
 		payload.setMessage(message);
 		broadcast(payload, id);
 	}
+	
+
+	
 	public static void main(String[] args) {
 		//let's allow port to be passed as a command line arg
 		//in eclipse you can set this via "Run Configurations" 

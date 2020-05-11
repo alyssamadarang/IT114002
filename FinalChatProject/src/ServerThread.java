@@ -79,6 +79,7 @@ public class ServerThread extends Thread{
 		payload.setMessage(message);
 		return send(payload);
 	}
+
 	@Override
 	public void run() {
 		try {
@@ -127,11 +128,19 @@ public class ServerThread extends Thread{
 			//payload.setMessage(WordBlackList.filter(payload.getMessage()));
 			server.broadcast(payload, this.clientName);
 			break;
+			/**
+		case STYLEDMESSAGE:
+			//we can just pass the whole payload onward
+			//payload.setMessage(WordBlackList.filter(payload.getMessage()));
+			server.broadcast(payload, this.clientName);
+			break;
+			**/
 		case SWITCH:
 			//whatever we get from the client, just tell everyone else, ok?
 			payload.setMessage(this.clientName);
 			server.toggleButton(payload);
 			break;
+
 		default:
 			System.out.println("Unhandled payload type from client " + payload.getPayloadType());
 			break;
